@@ -49,6 +49,16 @@ A 502 with the header `x-railway-fallback: true` means the app is **not answerin
 4. **Node version:** `package.json` requires Node 22 or newer (`engines`).
 5. **Then** check CORS: `curl -i -X OPTIONS -H "Origin: https://<frontend>" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: authorization" https://<railway-url>/api/trpc/auth.me` must answer `204` with an `Access-Control-Allow-Origin` header. A `403` means the origin is missing from `CORS_ORIGINS`.
 
+#### If sign-in succeeds (Google or password) but you are still logged out
+
+The browser holds a valid session, but the API rejects it. Ask the API why:
+
+1. In the browser (signed in), open DevTools, Network, click any `auth.me` request, and copy the value after `Bearer ` in its `Authorization` header (a long `eyJ...` string).
+2. Run `curl -s -H "Authorization: Bearer <that value>" https://<railway-url>/api/auth/diagnose`
+3. Read `stage`: `ok` means the API accepts this session (then the problem is in the browser). `token` means the session itself is rejected (see `problem` and `hint`; the usual cause is `SUPABASE_URL` or `SUPABASE_JWKS_URL` pointing at a different Supabase project than the frontend's `VITE_SUPABASE_URL`). `member` means the token is fine but the member could not be loaded or created (the usual cause is a database problem; `database` and `problem` say which).
+
+The response contains only error codes and public host names, never the token or database values. The same reasons are logged to the deploy logs as `[auth] ...` lines. The database the API uses must have the app's tables, but not the optional `users.legacyOpenId` column: the app does not read it, so a database without it works.
+
 ### Vercel (frontend)
 
 Only `VITE_*` values; everything here ends up in the browser, so it must be public.

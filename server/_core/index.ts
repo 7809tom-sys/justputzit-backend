@@ -15,6 +15,7 @@ import { registerStripeWebhook } from "../stripeCheckout";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { corsMiddleware } from "./cors";
+import { diagnoseAuth } from "./authDiagnose";
 import { installShutdownHandlers, logStartup } from "./startup";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -50,6 +51,8 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // Says why a sign-in is rejected (stage and error code only). See DEPLOY.md.
+  app.get("/api/auth/diagnose", diagnoseAuth);
   registerStorageProxy(app);
   registerPhotoUploadRoutes(app);
   registerVoiceRoutes(app, server);
