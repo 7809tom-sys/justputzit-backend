@@ -1,0 +1,2 @@
+ALTER TABLE `jeopardy_answers`
+  MODIFY COLUMN `answeredAtMs` BIGINT NOT NULL DEFAULT 0;

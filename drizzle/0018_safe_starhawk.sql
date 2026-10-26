@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `passkeyVerified` boolean DEFAULT false NOT NULL;

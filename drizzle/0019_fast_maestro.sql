@@ -1,0 +1,2 @@
+ALTER TABLE `community_events` MODIFY COLUMN `source` enum('community','eventbrite','admin','milwaukee_library','waukesha_library','uwm','marquette','onmilwaukee','scraped') NOT NULL DEFAULT 'admin';--> statement-breakpoint
+ALTER TABLE `community_events` ADD `isOnCampus` boolean DEFAULT false NOT NULL;
