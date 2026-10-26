@@ -1,7 +1,5 @@
 node_modules
 dist
-.env
-.env.*
 !.env.example
 !.env.staging.example
 *.log
@@ -13,3 +11,4 @@ just-putzit-storage/
 phase0/*
 !phase0/.gitkeep
 migration/reports/
+config.bat

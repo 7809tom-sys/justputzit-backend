@@ -23,6 +23,19 @@ function getRemoteJwks(): JWTVerifyGetKey {
   return remoteJwks;
 }
 
+/** The token issuers we accept: the project in SUPABASE_URL and the project that serves SUPABASE_JWKS_URL. */
+export function expectedIssuers(): string[] {
+  const hosts = new Set<string>();
+  for (const value of [ENV.supabaseUrl, ENV.supabaseJwksUrl]) {
+    try {
+      if (value) hosts.add(`${new URL(value).origin}/auth/v1`);
+    } catch {
+      // An unparsable value is reported by the diagnostics endpoint and by verification itself.
+    }
+  }
+  return [...hosts];
+}
+
 const asString = (value: unknown): string | null =>
   typeof value === "string" && value.length > 0 ? value : null;
 
@@ -35,8 +48,9 @@ export async function verifySupabaseToken(
   token: string,
   keySource?: KeySource,
 ): Promise<VerifiedIdentity> {
+  const issuers = expectedIssuers();
   const options = {
-    issuer: ENV.supabaseUrl ? `${ENV.supabaseUrl.replace(/\/+$/, "")}/auth/v1` : undefined,
+    issuer: issuers.length > 0 ? issuers : undefined,
     audience: "authenticated",
   };
   const { payload } = await (keySource

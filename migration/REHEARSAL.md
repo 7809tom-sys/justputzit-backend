@@ -55,7 +55,7 @@ Checked without any database: the real export, the 64 migration files, `drizzle/
 7. **`phase0/files/` does not exist.** The 15 member photos live in the Manus archive `just-putzit-storage/`; `upload-files.ts` falls back to its manifest. `phase0/manifest.csv` only references one column (`profile_photos.url`, 15 rows, 15 keys).
 8. **`rewrite-urls` is not needed by the Phase 1 server** (the storage proxy resolves `/manus-storage/<key>` itself). `--form=bare` would break photo display until the app is changed, so `run-all` only dry-runs it unless you pass `--rewrite-urls=<form>`.
 9. **`tsconfig.json` had no `target`**, so iterating a `Map` failed to type-check; set to `ES2022` (type-check only; Vite and esbuild do the builds).
-10. **New migration** `drizzle/0063_add_users_legacy_openid.sql` and `users.legacyOpenId` in `schema.ts`, hand-written (generating it would have tried to recreate the 40 unjournaled tables).
+10. **New migration** `drizzle/0063_add_users_legacy_openid.sql`, hand-written (generating it would have tried to recreate the 40 unjournaled tables). `users.legacyOpenId` is used only by the migration scripts (raw SQL) and is **not declared in `schema.ts`**: declaring it made every user lookup, and so every sign-in, fail with `ER_BAD_FIELD_ERROR` on a database without the column, which is exactly what broke the first Google sign-ins on the deployed site.
 
 Expected results from the Phase 0 data, to compare with the first real run: 114 tables in the export (58 with data, 5,467 rows excluding `__drizzle_migrations`); 11 users, none with a password hash, all with an email, so `import-users` should create **11 email-only auth users**; 15 files to upload, all private.
 

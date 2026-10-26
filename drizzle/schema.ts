@@ -17,8 +17,10 @@ import {
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
-  /** Original Manus open id, kept after openId is switched to the Supabase user id. */
-  legacyOpenId: varchar("legacyOpenId", { length: 64 }),
+  // users.legacyOpenId (the original Manus open id) is added by drizzle/0063 and used only by the migration scripts
+  // with raw SQL. It is deliberately NOT declared here: Drizzle selects every declared column, so declaring it
+  // makes every user lookup, and therefore every sign-in, fail with ER_BAD_FIELD_ERROR on a database that has not
+  // had that migration applied yet.
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
