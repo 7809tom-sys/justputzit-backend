@@ -3,6 +3,7 @@ import type { IncomingMessage } from "http";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
+import { logAuthFailure } from "./authLog";
 import { verifySupabaseToken, type VerifiedIdentity } from "./supabaseAuth";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -88,10 +89,16 @@ export async function authenticateToken(token: string): Promise<User> {
   let identity: VerifiedIdentity;
   try {
     identity = await verifySupabaseToken(token);
-  } catch {
+  } catch (error) {
+    logAuthFailure("token rejected", error);
     throw ForbiddenError("Invalid or expired session");
   }
-  return resolveUser(identity);
+  try {
+    return await resolveUser(identity);
+  } catch (error) {
+    logAuthFailure("signed in, but the member could not be loaded or created", error);
+    throw error;
+  }
 }
 
 export async function authenticateRequest(req: Pick<IncomingMessage, "headers">): Promise<User> {
