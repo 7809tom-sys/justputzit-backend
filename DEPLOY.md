@@ -39,6 +39,16 @@
 
 Railway settings: build `pnpm install --frozen-lockfile && pnpm build:api`, start `pnpm start`, health check path `/health`.
 
+#### If the browser shows a CORS error, or Railway answers "Application failed to respond" (502)
+
+A 502 with the header `x-railway-fallback: true` means the app is **not answering at all**. Browsers report that as a CORS error because Railway's error page carries no CORS header, so fix the 502 first (`curl -i https://<your-railway-url>/health` must return `{"status":"ok"}`).
+
+1. **Deployments, latest deploy:** is it *Active*? Open *Deploy Logs*. A healthy start prints `Server running on ...` followed by `[startup] listening on port N (NODE_ENV=production ...)`, the allowed CORS origins, and a `WARNING` line naming any missing variable. If the log ends in an error or the deploy is *Crashed* or *Failed*, that error is the cause.
+2. **Variables:** do not paste a local `.env` into Railway. Set `NODE_ENV=production`. Leave `PORT` unset (Railway provides it); if you do set it, the public domain's *target port* (Settings, Networking) must be the same number. `CORS_ORIGINS` must list the deployed origin(s), for example `https://justputzit-frontend.vercel.app`, not `localhost`.
+3. **Networking:** the domain's target port must match the port in the `[startup] listening on port N` line.
+4. **Node version:** `package.json` requires Node 22 or newer (`engines`).
+5. **Then** check CORS: `curl -i -X OPTIONS -H "Origin: https://<frontend>" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: authorization" https://<railway-url>/api/trpc/auth.me` must answer `204` with an `Access-Control-Allow-Origin` header. A `403` means the origin is missing from `CORS_ORIGINS`.
+
 ### Vercel (frontend)
 
 Only `VITE_*` values; everything here ends up in the browser, so it must be public.

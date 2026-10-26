@@ -15,6 +15,7 @@ import { registerStripeWebhook } from "../stripeCheckout";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { corsMiddleware } from "./cors";
+import { installShutdownHandlers, logStartup } from "./startup";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -81,7 +82,13 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    logStartup(port);
   });
+  installShutdownHandlers(server);
 }
 
-startServer().catch(console.error);
+// A failed start must exit non-zero so the platform marks the deploy as crashed instead of idle.
+startServer().catch(error => {
+  console.error("[startup] fatal:", error);
+  process.exit(1);
+});
