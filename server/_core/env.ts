@@ -14,10 +14,10 @@ export const ENV = {
   supabaseSecretKey: process.env.SUPABASE_SECRET_KEY ?? "",
   supabaseJwksUrl: process.env.SUPABASE_JWKS_URL ?? "",
 
-  // Gemini (LLM) and Google Maps (server-side)
+  // Gemini (LLM) and MapTiler (geocoding and place search, server-side)
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",
   geminiModel: process.env.GEMINI_MODEL || "gemini-3.8-flash",
-  googleMapsServerKey: process.env.GOOGLE_MAPS_SERVER_KEY ?? "",
+  maptilerKey: process.env.MAPTILER_API_KEY ?? "",
 
   // Access control and deployment
   cronSecret: process.env.CRON_SECRET ?? "",

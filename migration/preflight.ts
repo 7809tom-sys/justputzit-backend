@@ -156,10 +156,10 @@ export async function run(_ctx?: Partial<StepContext>) {
       const res = await withRetry(() => fetch("https://generativelanguage.googleapis.com/v1beta/openai/models", { headers: { authorization: `Bearer ${file.GEMINI_API_KEY ?? ""}` } }));
       return res.status === 200 ? ["PASS", "models endpoint HTTP 200"] : ["FAIL", `HTTP ${res.status}`];
     });
-    await attempt("Google Maps server key accepted", async () => {
-      const res = await withRetry(() => fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=Milwaukee&key=${encodeURIComponent(file.GOOGLE_MAPS_SERVER_KEY ?? "")}`));
-      const body = (await res.json().catch(() => ({}))) as { status?: string };
-      return body.status === "OK" ? ["PASS", "geocoding OK"] : ["FAIL", `geocoding status ${body.status ?? res.status}`];
+    await attempt("MapTiler key accepted", async () => {
+      const res = await withRetry(() => fetch(`https://api.maptiler.com/geocoding/Milwaukee.json?limit=1&key=${encodeURIComponent(file.MAPTILER_API_KEY ?? "")}`));
+      const body = (await res.json().catch(() => ({}))) as { features?: unknown[] };
+      return res.status === 200 && Array.isArray(body.features) && body.features.length > 0 ? ["PASS", "geocoding HTTP 200"] : ["FAIL", `geocoding HTTP ${res.status}`];
     });
   }
 

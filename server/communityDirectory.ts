@@ -11,7 +11,7 @@ type DirectorySearchInput = {
   lng?: number;
 };
 
-type DirectoryMapSource = "OpenStreetMap" | "Google Maps";
+type DirectoryMapSource = "OpenStreetMap" | "MapTiler";
 
 type DirectoryMapResult = {
   directoryId: string;
@@ -103,11 +103,13 @@ function placeToDirectoryResult(place: PlacesSearchResult["results"][number]): D
   if (!place.place_id || !place.name) return null;
   const location = place.geometry?.location;
   return {
-    directoryId: `google:${place.place_id}`,
-    source: "Google Maps",
+    directoryId: `maptiler:${place.place_id}`,
+    source: "MapTiler",
     name: place.name,
-    address: place.formatted_address ?? "Address available in Google Maps",
-    mapUrl: `https://www.google.com/maps/search/?api=1&query_place_id=${encodeURIComponent(place.place_id)}`,
+    address: place.formatted_address ?? "Address available on the map",
+    mapUrl: location
+      ? `https://www.openstreetmap.org/?mlat=${location.lat}&mlon=${location.lng}#map=18/${location.lat}/${location.lng}`
+      : "https://www.openstreetmap.org/",
     directionsUrl: location ? `https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}` : undefined,
   };
 }
@@ -155,7 +157,7 @@ function verifiedResourcesFor(input: DirectorySearchInput) {
   return normalizeCity(input.city) === "waukesha" ? WAUKESHA_VERIFIED_HELP : [];
 }
 
-function googleSearchQueries(input: DirectorySearchInput) {
+function mapSearchQueries(input: DirectorySearchInput) {
   const cityLabel = [input.city.trim(), input.state?.trim()].filter(Boolean).join(", ");
   if (input.kind === "churches") return [`churches in ${cityLabel}`];
   return [
@@ -164,8 +166,8 @@ function googleSearchQueries(input: DirectorySearchInput) {
   ];
 }
 
-async function searchGooglePublicMapListings(input: DirectorySearchInput) {
-  const requests: Promise<PlacesSearchResult>[] = googleSearchQueries(input).map((query) =>
+async function searchPublicMapListings(input: DirectorySearchInput) {
+  const requests: Promise<PlacesSearchResult>[] = mapSearchQueries(input).map((query) =>
     makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", {
       query,
       location: Number.isFinite(input.lat) && Number.isFinite(input.lng) ? `${input.lat},${input.lng}` : undefined,
@@ -249,7 +251,7 @@ async function comprehensiveCongregationInventory(input: DirectorySearchInput): 
  * The church directory is deliberately not a handpicked source list. It queries every public
  * OpenStreetMap place-of-worship/building record in the selected community area and labels the
  * provider. Official calendars remain a separate future-event pathway and never imply complete
- * directory coverage; Google Maps is used only for the separate community-help lookup.
+ * directory coverage; MapTiler is used only for the separate community-help lookup.
  */
 export async function getCommunityDirectory(input: DirectorySearchInput) {
   const city = input.city.trim();
@@ -271,7 +273,7 @@ export async function getCommunityDirectory(input: DirectorySearchInput) {
     };
   }
 
-  const mapResults = await searchGooglePublicMapListings({ ...input, city });
+  const mapResults = await searchPublicMapListings({ ...input, city });
   return {
     city,
     kind: input.kind,

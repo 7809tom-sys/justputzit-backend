@@ -517,7 +517,7 @@ async function discoverPublicActivitiesFromMaps(city: string, state?: string): P
           address: place.formatted_address ?? city,
           city,
           state: state ?? "",
-          website: `https://www.google.com/maps/place/?q=place_id:${place.place_id}`,
+          website: `https://www.openstreetmap.org/?mlat=${place.geometry.location.lat}&mlon=${place.geometry.location.lng}#map=18/${place.geometry.location.lat}/${place.geometry.location.lng}`,
           emoji: search.emoji,
           accessNotes: "Public-access search result. Confirm current hours, reservations, guest rules, and fees directly with the venue before making plans.",
         });

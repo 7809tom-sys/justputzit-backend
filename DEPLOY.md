@@ -6,7 +6,7 @@
 | API | **Railway** | Express + tRPC + WebSocket + scheduled jobs (`pnpm build:api`, `pnpm start`) |
 | Database | **TiDB Cloud** | MySQL, Drizzle schema unchanged |
 | Auth + files | **Supabase** | Auth (email+password, Google) and Storage |
-| AI / Maps | **Gemini**, **Google Maps** | Your own API keys |
+| AI / Maps | **Gemini**, **MapTiler** | Your own API keys |
 
 `.env.example` lists every variable. Never commit a real `.env`.
 
@@ -25,7 +25,7 @@
 | `SUPABASE_PUBLISHABLE_KEY` | no | Not used by the API; kept for reference. |
 | `GEMINI_API_KEY` | yes | Without it AI features return a friendly "try again" error. |
 | `GEMINI_MODEL` | no | Defaults to `gemini-3.8-flash`. Google retires models; if calls start returning 404 "no longer available", set this to a current model (`gemini-flash-latest` always points at the newest flash model). |
-| `GOOGLE_MAPS_SERVER_KEY` | yes | Geocoding and Places. Restrict by API (not by referrer). |
+| `MAPTILER_API_KEY` | yes | MapTiler key for geocoding and place search. Use a separate key from the browser one, with no origin restriction (server requests send no `Origin`). |
 | `CRON_SECRET` | yes | Long random string. With it unset every `/api/scheduled/*` call is refused (503). |
 | `ADMIN_EMAILS` | yes | Comma-separated. Members with a **verified** matching email become admins on sign-in. |
 | `CORS_ORIGINS` | yes | Comma-separated browser origins, e.g. `https://justputzit.com,https://www.justputzit.com`. |
@@ -48,7 +48,7 @@ Only `VITE_*` values; everything here ends up in the browser, so it must be publ
 | `VITE_API_URL` | Railway public URL, e.g. `https://api.justputzit.com` (no trailing slash). Used for tRPC, uploads and the WebSocket. |
 | `VITE_SUPABASE_URL` | Same as `SUPABASE_URL`. |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | The publishable (anon) key. |
-| `VITE_GOOGLE_MAPS_KEY` | Browser key. **Restrict by HTTP referrer** to your domains. |
+| `VITE_MAPTILER_KEY` | MapTiler browser key (map tiles, style and place search). **Restrict it in the MapTiler dashboard (Account, Keys, Allowed HTTP origins)** to `https://justputzit.com`, `https://www.justputzit.com`, your Vercel preview URLs if needed, and `http://localhost:5173` for development. |
 | `VITE_SITE_URL` | Public site URL. |
 | `VITE_ANALYTICS_ENDPOINT`, `VITE_ANALYTICS_WEBSITE_ID` | Optional (Umami). |
 
@@ -88,7 +88,7 @@ Of the 11 imported members (7 Google, 3 Apple, 1 unknown): Google members just u
 ### Password reset
 `/login` has a "Forgot password?" link to `/forgot-password`, which emails a link to `/reset-password` where the member picks a new password. The form always shows the same confirmation, whether or not the address has an account. Links work once and expire.
 
-## 3. Google OAuth (sign-in) and Maps
+## 3. Google OAuth (sign-in) and MapTiler
 
 In Google Cloud Console → APIs & Services → Credentials:
 
@@ -97,7 +97,7 @@ In Google Cloud Console → APIs & Services → Credentials:
    - **Authorized JavaScript origins:** `https://justputzit.com`, `https://www.justputzit.com`, `http://localhost:5173`
 2. Put the client ID and secret into Supabase → Providers → Google.
 3. Consent screen: add `justputzit.com` as an authorized domain and publish the app.
-4. Maps: create two keys. Server key (`GOOGLE_MAPS_SERVER_KEY`) restricted to Geocoding API and Places API. Browser key (`VITE_GOOGLE_MAPS_KEY`) restricted by HTTP referrer, with Maps JavaScript API and Places enabled.
+4. Maps: in MapTiler Cloud create two keys. The server key is `MAPTILER_API_KEY` (no origin restriction). The browser key is `VITE_MAPTILER_KEY`, restricted to the site origins listed in section 1. MapTiler place search returns no ratings or opening hours and matches names and categories, so results differ from Google Places.
 
 ## 4. Scheduled jobs (Railway cron)
 
